@@ -1,0 +1,64 @@
+plugins {
+    id 'java'
+    id 'war'
+    id 'org.springframework.boot' version '2.3.1.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'com.vaadin' version '0.7.0'
+}
+
+group 'org.alsjava.examples.invoices'
+version '1.0.0'
+
+sourceCompatibility = '14'
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven { url "http://maven.vaadin.com/vaadin-addons" }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom configurations.annotationProcessor
+    }
+}
+
+ext {
+    set('junit_jupiter_version', "5.6.2")
+    set('vaadinVersion', "14.2.1")
+    set('lombok_version', "1.18.12")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "com.vaadin:vaadin-bom:${vaadinVersion}"
+    }
+}
+
+dependencies {
+    // Vaadin
+    implementation("com.vaadin:vaadin-spring-boot-starter:$vaadinVersion") {
+        // Optimizacion sino seres compatibles con codigo viejo de vaadin
+        ["com.vaadin.webjar", "org.webjars.bowergithub.insites",
+         "org.webjars.bowergithub.polymer", "org.webjars.bowergithub.polymerelements",
+         "org.webjars.bowergithub.vaadin", "org.webjars.bowergithub.webcomponents"]
+                .forEach { group -> exclude(group: group) }
+    }
+    // Spring Boot
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    // Boilerplate Code
+    compileOnly "org.projectlombok:lombok:$lombok_version"
+    annotationProcessor "org.projectlombok:lombok:$lombok_version"
+    // Test
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    testImplementation "org.junit.jupiter:junit-jupiter:$junit_jupiter_version"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_jupiter_version"
+}
+
+springBoot {
+    buildInfo() // Entrega informacion del BUILD del JAR o WAR
+}
+
+test {
+    useJUnitPlatform()
+}
