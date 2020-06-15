@@ -3,13 +3,13 @@ plugins {
     id 'war'
     id 'org.springframework.boot' version '2.3.1.RELEASE'
     id 'io.spring.dependency-management' version '1.0.9.RELEASE'
-    id 'com.vaadin' version '0.7.0'
+//    id 'com.vaadin' version '0.7.0'
 }
 
 group 'org.alsjava.examples.invoices'
 version '1.0.0'
 
-sourceCompatibility = '14'
+sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenCentral()
