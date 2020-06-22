@@ -1,4 +1,4 @@
-package org.alsjava.examples.invoices.ui;
+package org.alsjava.examples.invoices.ui.pdf;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasSize;
@@ -9,19 +9,14 @@ import com.vaadin.flow.server.StreamResource;
  * Created by aluis on 6/21/20.
  */
 @Tag("object")
-public class PDFViewer  extends Component implements HasSize {
+public class PDFObjectViewer extends Component implements HasSize {
 
-    public PDFViewer(StreamResource resource) {
+    public PDFObjectViewer(StreamResource resource) {
         this();
         getElement().setAttribute("data", resource);
     }
 
-    public PDFViewer(String url) {
-        this();
-        getElement().setAttribute("data", url);
-    }
-
-    private PDFViewer() {
+    public PDFObjectViewer() {
         getElement().setAttribute("type", "application/pdf");
         setSizeFull();
     }

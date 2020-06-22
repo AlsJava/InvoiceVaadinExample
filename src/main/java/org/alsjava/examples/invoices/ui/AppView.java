@@ -12,6 +12,7 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
 import org.alsjava.examples.invoices.PrintTool;
 import org.alsjava.examples.invoices.model.Product;
+import org.alsjava.examples.invoices.ui.pdf.ReportViewer;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -23,10 +24,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Created by aluis on 6/14/20.
+ * Created by aluis on 6/21/20.
  */
 @Route("")
-public class App extends VerticalLayout {
+public class AppView extends VerticalLayout {
 
     private static final Product PRODUCT = new Product();
 
@@ -39,18 +40,37 @@ public class App extends VerticalLayout {
     private final IronList<Product> productIronList = new IronList<>();
     private ListDataProvider<Product> dataProvider;
 
-    public App() {
+    public AppView() {
         products.add(new Product(1));
-        Button btnLocalPrint = new Button("Local Print");
-        btnLocalPrint.addClickListener(event -> getUI().ifPresent(ui -> PrintTool.printFromClient(ui, tfInvoiceNumber.getValue(), prepareTemplate())));
-        Button btnServerPrint = new Button("Server Print");
-        btnServerPrint.addClickListener(event -> {
-            ReportView reportView = new ReportView(PrintTool.printFromServer(prepareTemplate()));
-            reportView.open();
-        });
-        add(new HorizontalLayout(btnLocalPrint, btnServerPrint));
+        add(printHeader());
         add(header());
         add(body());
+    }
+
+    private HorizontalLayout printHeader() {
+        Button btnClientPrint = new Button("Client Print");
+        btnClientPrint.addClickListener(event -> {
+            getUI().ifPresent(ui -> PrintTool.printFromClient(ui, tfInvoiceNumber.getValue(), prepareTemplate()));
+        });
+        Button btnServerPrint = new Button("Server Print");
+        btnServerPrint.addClickListener(event -> {
+            ReportViewer reportViewer = new ReportViewer(tfInvoiceNumber.getValue(), PrintTool.printFromServer(prepareTemplate()));
+            reportViewer.open();
+        });
+        return new HorizontalLayout(btnClientPrint, btnServerPrint);
+    }
+
+    private String prepareTemplate() {
+        StringBuilder productsHTML = new StringBuilder();
+        for (Product product : products) {
+            productsHTML.append(product.toHTML());
+        }
+        return String.format(loadInvoiceTemplate(), tfInvoiceNumber.getValue(), dpCreationDate.getValue(), dpDueDate.getValue(), productsHTML.toString());
+    }
+
+    private String loadInvoiceTemplate() {
+        InputStream inputStream = getClass().getResourceAsStream("/invoice.html");
+        return new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining());
     }
 
     private HorizontalLayout header() {
@@ -74,18 +94,5 @@ public class App extends VerticalLayout {
             dataProvider.refreshAll();
         });
         return new VerticalLayout(productIronList, btnAdd);
-    }
-
-    private String prepareTemplate() {
-        StringBuilder productConvert = new StringBuilder();
-        for (Product product : products) {
-            productConvert.append(product.toString());
-        }
-        return String.format(loadInvoiceTemplate(), tfInvoiceNumber.getValue(), dpCreationDate.getValue(), dpDueDate.getValue(), productConvert.toString());
-    }
-
-    private String loadInvoiceTemplate() {
-        InputStream inputStream = getClass().getResourceAsStream("/invoice_template.html");
-        return new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining());
     }
 }

@@ -19,7 +19,7 @@ public final class PrintTool {
                         "w.document.close();" +
                         "w.document.title = '%s';" +
                         "w.focus();" +
-                        "w.print();",
+                        "w.print()",
                 html, invoiceName);
         ui.getPage().executeJs(js);
     }
@@ -29,35 +29,38 @@ public final class PrintTool {
             File invoice = File.createTempFile("invoice", ".html");
             FileWriter fileWriter = new FileWriter(invoice);
             PrintWriter printWriter = new PrintWriter(fileWriter);
-            printWriter.println("<html lang=\"en\"><body>" + html + "</body></html>");
+            printWriter.println("<html><body>" + html + "</body></html>");
             printWriter.close();
-//        boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
             File pdfFile = new File(invoice.getParentFile(), "PDF.pdf");
             System.out.println(pdfFile.getAbsolutePath());
             System.out.println(invoice.getAbsolutePath());
-            Process process;
-//            if (isWindows) {
-//            }+
-            process = Runtime.getRuntime().exec(String.format("google-chrome --headless --disable-gpu --print-to-pdf=%s --no-margins %s", pdfFile.getAbsolutePath(), invoice.getAbsolutePath()));
-            StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), System.out::println);
-            Executors.newSingleThreadExecutor().submit(streamGobbler);
+            String command = String.format("google-chrome --headless --disable-gpu --print-to-pdf=%s --no-margin %s", pdfFile.getAbsolutePath(), invoice.getAbsolutePath());
+            Process process = Runtime.getRuntime().exec(command);
+            Gobbler gobbler = new Gobbler(process.getInputStream(), System.out::println);
+            Executors.newSingleThreadExecutor().submit(gobbler);
             int exitCode = process.waitFor();
-            assert exitCode == 0;
-            byte[] bytes = Files.readAllBytes(pdfFile.toPath());
-            invoice.delete();
-            pdfFile.delete();
-            return bytes;
+            if (exitCode == 0) {
+                byte[] bytes = Files.readAllBytes(pdfFile.toPath());
+                if (invoice.delete()) {
+                    System.out.println("Invoice Deleted");
+                }
+                if (pdfFile.delete()) {
+                    System.out.println("PDF File Deleted");
+                }
+                return bytes;
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
-            return null;
         }
+        return null;
     }
 
-    private static class StreamGobbler implements Runnable {
+    private static class Gobbler implements Runnable {
+
         private final InputStream inputStream;
         private final Consumer<String> consumer;
 
-        public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
+        private Gobbler(InputStream inputStream, Consumer<String> consumer) {
             this.inputStream = inputStream;
             this.consumer = consumer;
         }

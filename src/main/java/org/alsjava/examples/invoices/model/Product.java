@@ -5,13 +5,13 @@ import lombok.*;
 import java.math.BigDecimal;
 
 /**
- * Created by aluis on 6/14/20.
+ * Created by aluis on 6/21/20.
  */
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Product {
 
     @EqualsAndHashCode.Include
@@ -25,14 +25,14 @@ public class Product {
         this.item = item;
     }
 
-    @Override
-    public String toString() {
+    public String toHTML() {
         return String.format("<tr>" +
                         "<td>%s</td>" +
                         "<td>%s</td>" +
                         "<td>%s</td>" +
                         "<td>%s</td>" +
-                        "<tr>",
-                item, name, quantity, amount);
+                        "<td>%s</td>" +
+                        "</tr>",
+                item, name, quantity, amount, quantity.multiply(amount));
     }
 }

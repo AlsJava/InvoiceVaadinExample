@@ -13,7 +13,7 @@ import java.math.BigDecimal;
  */
 public class ProductRowView extends HorizontalLayout {
 
-    private final IntegerField ifItem = new IntegerField();
+    private final IntegerField ifItem = new IntegerField("Item");
 
     private TextField tfName;
     private BigDecimalField bdfQuantity;
@@ -29,7 +29,7 @@ public class ProductRowView extends HorizontalLayout {
     }
 
     private void prepareView() {
-        tfName = new TextField("name");
+        tfName = new TextField("Name");
         tfName.addValueChangeListener(event -> product.setName(event.getValue()));
         bdfQuantity = new BigDecimalField("Quantity");
         bdfQuantity.addValueChangeListener(event -> {
@@ -41,11 +41,12 @@ public class ProductRowView extends HorizontalLayout {
             product.setAmount(event.getValue());
             calculate();
         });
-        add(tfName, bdfQuantity, bdfAmount, tfTotal);
+        add(ifItem, tfName, bdfQuantity, bdfAmount, tfTotal);
         ifItem.setValue(product.getItem());
         tfName.setValue(product.getName());
         bdfQuantity.setValue(product.getQuantity());
         bdfAmount.setValue(product.getAmount());
+        ifItem.setReadOnly(true);
         tfTotal.setReadOnly(true);
     }
 
@@ -53,9 +54,10 @@ public class ProductRowView extends HorizontalLayout {
         BigDecimal quantity = bdfQuantity.getValue();
         BigDecimal amount = bdfAmount.getValue();
         if (quantity == null || amount == null) {
-            tfTotal.setValue("");
+            tfTotal.setValue("None");
         } else {
-            tfTotal.setValue(quantity.multiply(amount).toString());
+            tfTotal.setValue(quantity.multiply(amount).toEngineeringString());
         }
     }
+
 }
