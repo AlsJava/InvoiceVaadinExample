@@ -12,13 +12,16 @@ import java.util.function.Consumer;
  */
 public final class PrintTool {
 
-    public static void printFromClient(UI ui, String html) {
-        ui.getPage().executeJs("var printContents = '" + html + "';" +
-                "       var w = window.open('', 'Invoice');" +
-                "        w.document.write(printContents);" +
-                "        w.document.close();" +
-                "        w.focus();" +
-                "        w.print();");
+    public static void printFromClient(UI ui, String invoiceName, String html) {
+        String js = String.format("var printContents = '%s';" +
+                        "var w = window.open();" +
+                        "w.document.write(printContents);" +
+                        "w.document.close();" +
+                        "w.document.title = '%s';" +
+                        "w.focus();" +
+                        "w.print();",
+                html, invoiceName);
+        ui.getPage().executeJs(js);
     }
 
     public static byte[] printFromServer(String html) {
@@ -34,7 +37,7 @@ public final class PrintTool {
             System.out.println(invoice.getAbsolutePath());
             Process process;
 //            if (isWindows) {
-//            }
+//            }+
             process = Runtime.getRuntime().exec(String.format("google-chrome --headless --disable-gpu --print-to-pdf=%s --no-margins %s", pdfFile.getAbsolutePath(), invoice.getAbsolutePath()));
             StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), System.out::println);
             Executors.newSingleThreadExecutor().submit(streamGobbler);

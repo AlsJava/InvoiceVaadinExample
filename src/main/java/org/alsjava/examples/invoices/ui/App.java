@@ -42,7 +42,7 @@ public class App extends VerticalLayout {
     public App() {
         products.add(new Product(1));
         Button btnLocalPrint = new Button("Local Print");
-        btnLocalPrint.addClickListener(event -> getUI().ifPresent(ui -> PrintTool.printFromClient(ui, prepareTemplate())));
+        btnLocalPrint.addClickListener(event -> getUI().ifPresent(ui -> PrintTool.printFromClient(ui, tfInvoiceNumber.getValue(), prepareTemplate())));
         Button btnServerPrint = new Button("Server Print");
         btnServerPrint.addClickListener(event -> {
             ReportView reportView = new ReportView(PrintTool.printFromServer(prepareTemplate()));
