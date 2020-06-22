@@ -1,13 +1,26 @@
 package org.alsjava.examples.invoices.ui;
 
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datepicker.DatePicker;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.ironlist.IronList;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.data.provider.ListDataProvider;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
+import org.alsjava.examples.invoices.PrintTool;
+import org.alsjava.examples.invoices.model.Product;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Created by aluis on 6/14/20.
@@ -15,79 +28,64 @@ import com.vaadin.flow.router.Route;
 @Route("")
 public class App extends VerticalLayout {
 
-    private static final int size = 800;
+    private static final Product PRODUCT = new Product();
 
-    private Div body = new Div();
+    private TextField tfInvoiceNumber;
+    private DatePicker dpCreationDate;
+    private DatePicker dpDueDate;
+
+    private final List<Product> products = new ArrayList<>();
+
+    private final IronList<Product> productIronList = new IronList<>();
+    private ListDataProvider<Product> dataProvider;
 
     public App() {
-        setWidth(size + "px");
-        setHeightFull();
-        add(createHeader());
-        add(createBody());
-        add(createFooter());
+        products.add(new Product(1));
+        Button btnLocalPrint = new Button("Local Print");
+        btnLocalPrint.addClickListener(event -> getUI().ifPresent(ui -> PrintTool.printFromClient(ui, prepareTemplate())));
+        Button btnServerPrint = new Button("Server Print");
+        btnServerPrint.addClickListener(event -> {
+            ReportView reportView = new ReportView(PrintTool.printFromServer(prepareTemplate()));
+            reportView.open();
+        });
+        add(new HorizontalLayout(btnLocalPrint, btnServerPrint));
+        add(header());
+        add(body());
     }
 
-    private VerticalLayout createHeader() {
-        VerticalLayout vlHeader = new VerticalLayout();
-        vlHeader.setPadding(false);
-        vlHeader.setClassName("header");
-        vlHeader.setWidthFull();
-
-        Image imageLogo = new Image();
-        imageLogo.setWidth((size / 2) + "px");
-
-        VerticalLayout vlInfo = new VerticalLayout();
-        vlInfo.setAlignItems(Alignment.END);
-        vlInfo.setWidth((size / 2) + "px");
-
-        TextField tfInvoiceNumber = new TextField("Invoice #:");
-        DatePicker dpCreationDate = new DatePicker("Created:");
-        DatePicker dpDueDate = new DatePicker("Due:");
-
-        vlInfo.add(tfInvoiceNumber, dpCreationDate, dpDueDate);
-
-        HorizontalLayout hlUp = new HorizontalLayout();
-        hlUp.setPadding(false);
-        hlUp.setClassName("up-part");
-        hlUp.setWidthFull();
-        hlUp.add(imageLogo, vlInfo);
-
-        HorizontalLayout hlDown = new HorizontalLayout();
-        hlDown.setPadding(false);
-        hlDown.setClassName("down-part");
-        hlDown.setWidthFull();
-
-        TextArea taData1 = new TextArea();
-        taData1.setWidthFull();
-        taData1.setPlaceholder("Write here ...");
-        TextArea taData2 = new TextArea();
-        taData2.setPlaceholder("Write here ...");
-        taData2.setWidthFull();
-
-        hlDown.add(taData1, taData2);
-
-        vlHeader.add(hlUp);
-        vlHeader.add(hlDown);
-
-        return vlHeader;
+    private HorizontalLayout header() {
+        tfInvoiceNumber = new TextField("Invoice #:");
+        tfInvoiceNumber.setValue(UUID.randomUUID().toString().replaceAll("-", ""));
+        dpCreationDate = new DatePicker("Created:");
+        dpCreationDate.setValue(LocalDate.now());
+        dpDueDate = new DatePicker("Due:");
+        dpDueDate.setValue(LocalDate.now());
+        return new HorizontalLayout(tfInvoiceNumber, dpCreationDate, dpDueDate);
     }
 
-    private Div createBody() {
-        body.setWidthFull();
-
-
-
-        // Editor de items
-
-        return body;
+    private VerticalLayout body() {
+        dataProvider = DataProvider.ofCollection(products);
+        productIronList.setDataProvider(dataProvider);
+        productIronList.setPlaceholderItem(PRODUCT);
+        productIronList.setRenderer(new ComponentRenderer<>(ProductRowView::new));
+        Button btnAdd = new Button("Add");
+        btnAdd.addClickListener(event -> {
+            products.add(new Product(products.size() + 1));
+            dataProvider.refreshAll();
+        });
+        return new VerticalLayout(productIronList, btnAdd);
     }
 
-    private HorizontalLayout createFooter() {
-        HorizontalLayout hlFooter = new HorizontalLayout();
-        hlFooter.setWidthFull();
-        TextArea taFooter = new TextArea();
-        taFooter.setWidthFull();
-        hlFooter.add(taFooter);
-        return hlFooter;
+    private String prepareTemplate() {
+        StringBuilder productConvert = new StringBuilder();
+        for (Product product : products) {
+            productConvert.append(product.toString());
+        }
+        return String.format(loadInvoiceTemplate(), tfInvoiceNumber.getValue(), dpCreationDate.getValue(), dpDueDate.getValue(), productConvert.toString());
+    }
+
+    private String loadInvoiceTemplate() {
+        InputStream inputStream = getClass().getResourceAsStream("/invoice_template.html");
+        return new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining());
     }
 }
