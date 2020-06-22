@@ -29,18 +29,21 @@ public final class PrintTool {
             printWriter.println("<html lang=\"en\"><body>" + html + "</body></html>");
             printWriter.close();
 //        boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
-            ProcessBuilder builder = new ProcessBuilder();
-//        if (isWindows) {
-//        }
             File pdfFile = new File(invoice.getParentFile(), "PDF.pdf");
             System.out.println(pdfFile.getAbsolutePath());
             System.out.println(invoice.getAbsolutePath());
-            Process process = Runtime.getRuntime().exec(String.format("google-chrome --headless --disable-gpu --print-to-pdf=%s --no-margins %s", pdfFile.getAbsolutePath(), invoice.getAbsolutePath()));
+            Process process;
+//            if (isWindows) {
+//            }
+            process = Runtime.getRuntime().exec(String.format("google-chrome --headless --disable-gpu --print-to-pdf=%s --no-margins %s", pdfFile.getAbsolutePath(), invoice.getAbsolutePath()));
             StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), System.out::println);
             Executors.newSingleThreadExecutor().submit(streamGobbler);
             int exitCode = process.waitFor();
             assert exitCode == 0;
-            return Files.readAllBytes(pdfFile.toPath());
+            byte[] bytes = Files.readAllBytes(pdfFile.toPath());
+            invoice.delete();
+            pdfFile.delete();
+            return bytes;
         } catch (Exception ex) {
             ex.printStackTrace();
             return null;
